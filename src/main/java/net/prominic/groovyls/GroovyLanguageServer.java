@@ -52,7 +52,15 @@ public class GroovyLanguageServer implements LanguageServer, LanguageClientAware
         // redirect System.out to System.err because we need to prevent
         // System.out from receiving anything that isn't an LSP message
         System.setOut(new PrintStream(System.err));
-        GroovyLanguageServer server = new GroovyLanguageServer();
+
+        // Pass PROJECT_CLASSPATH to the server
+        GroovyLanguageServer server;
+        if (args.length > 0) {
+            server = new GroovyLanguageServer(args);
+        } else {
+            server = new GroovyLanguageServer();
+        }
+
         Launcher<LanguageClient> launcher = Launcher.createLauncher(server, LanguageClient.class, systemIn, systemOut);
         server.connect(launcher.getRemoteProxy());
         launcher.startListening();
@@ -62,6 +70,13 @@ public class GroovyLanguageServer implements LanguageServer, LanguageClientAware
 
     public GroovyLanguageServer() {
         this(new CompilationUnitFactory());
+    }
+
+    // New constructor
+    public GroovyLanguageServer(String[] args) {
+        CompilationUnitFactory cuf = new CompilationUnitFactory();
+        cuf.setAdditionalClasspathList(Arrays.asList(args[0].split(":")));
+        this.groovyServices = new GroovyServices(cuf);
     }
 
     public GroovyLanguageServer(ICompilationUnitFactory compilationUnitFactory) {
